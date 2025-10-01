@@ -219,7 +219,7 @@ router.get("/", authenticateToken, (req, res) => {
         WHERE e.teacher_id = ?
         ORDER BY e.created_at DESC`,
       )
-      .all(req.user.userId)
+      .all(req.user.id)
 
     // For each exam, fetch settings and questions
     const parsedExams = exams.map((exam) => {
@@ -283,7 +283,7 @@ router.get("/:id", authenticateToken, (req, res) => {
         LEFT JOIN users u ON e.teacher_id = u.id
         WHERE e.id = ? AND e.teacher_id = ?`,
       )
-      .get(req.params.id, req.user.userId)
+      .get(req.params.id, req.user.id)
 
     if (!exam) {
       return res.status(404).json({
@@ -365,6 +365,7 @@ router.post("/", authenticateToken, (req, res) => {
     }
 
     console.log("[v0] Validation passed, inserting exam into database")
+    console.log("[v0] Using teacher_id:", req.user.id)
 
     const examResult = db
       .prepare(
@@ -372,7 +373,7 @@ router.post("/", authenticateToken, (req, res) => {
         (title, subject, description, teacher_id, status, version)
         VALUES (?, ?, ?, ?, ?, ?)`,
       )
-      .run(title, subject, description || "", req.user.userId, status || "draft", 1)
+      .run(title, subject, description || "", req.user.id, status || "draft", 1)
 
     const examId = examResult.lastInsertRowid
     console.log("[v0] Exam information inserted with ID:", examId)
@@ -434,7 +435,7 @@ router.put("/:id", authenticateToken, (req, res) => {
     // Check if exam exists and belongs to user
     const exam = db
       .prepare("SELECT * FROM exam_information WHERE id = ? AND teacher_id = ?")
-      .get(req.params.id, req.user.userId)
+      .get(req.params.id, req.user.id)
 
     if (!exam) {
       return res.status(404).json({
@@ -533,7 +534,7 @@ router.delete("/:id", authenticateToken, (req, res) => {
   try {
     const exam = db
       .prepare("SELECT * FROM exam_information WHERE id = ? AND teacher_id = ?")
-      .get(req.params.id, req.user.userId)
+      .get(req.params.id, req.user.id)
 
     if (!exam) {
       return res.status(404).json({
@@ -572,7 +573,7 @@ router.post("/:id/send-to-department", authenticateToken, (req, res) => {
     // Check if exam exists and belongs to user
     const exam = db
       .prepare("SELECT * FROM exam_information WHERE id = ? AND teacher_id = ?")
-      .get(req.params.id, req.user.userId)
+      .get(req.params.id, req.user.id)
 
     if (!exam) {
       return res.status(404).json({
